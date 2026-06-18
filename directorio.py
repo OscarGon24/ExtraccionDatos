@@ -5,16 +5,13 @@ from selenium.webdriver.support.ui import WebDriverWait as Wait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains # <- Nueva importación
+from selenium.webdriver.common.action_chains import ActionChains
 
 opciones = Options()
-
-# 1. Configuraciones base de seguridad
 opciones.add_argument('--ignore-certificate-errors')
 opciones.add_argument('--ignore-ssl-errors')
 opciones.set_capability('acceptInsecureCerts', True)
 
-# 2. Desactivar explícitamente el modo HTTPS desde las preferencias internas
 prefs = {"https_only_mode_enabled": False}
 opciones.add_experimental_option("prefs", prefs)
 
