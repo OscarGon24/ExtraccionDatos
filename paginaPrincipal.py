@@ -2,6 +2,7 @@ import csv
 import time
 import directorio
 import licenciaturas
+import titulacion
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
@@ -22,6 +23,18 @@ finally:
 try:
     print("Extrayendo oferta educativa licenciaturas...")
     licenciaturas.extraerLicenciaturas()
+
+except Exception as e:
+    print(f"Error durante el proceso: {e}")
+
+finally:
+    print("Cerrando el navegador...")
+    driver.quit()
+
+try:
+    print("Extrayendo datos de la titulación...")
+    titulacion.datosNavbar()
+    titulacion.convocatoriasParaInscripcion()
 
 except Exception as e:
     print(f"Error durante el proceso: {e}")

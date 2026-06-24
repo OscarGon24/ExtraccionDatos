@@ -152,7 +152,3 @@ def extraerDirectorio():
         print(f"¡Éxito! Datos guardados correctamente en '{archivo_csv}'")
     except Exception as e:
         print(f"Error durante el proceso: {e}")
-
-    finally:
-        print("Cerrando el navegador...")
-        driver.quit()

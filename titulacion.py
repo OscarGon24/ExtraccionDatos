@@ -18,7 +18,7 @@ opciones.add_experimental_option("prefs", prefs)
 driver = webdriver.Chrome(options=opciones)
 
 directorio = []
-navbarDatos = []
+navbar = []
 
 def datosNavbar():
 
@@ -36,7 +36,7 @@ def datosNavbar():
             link= navbarElemento.get_attribute("href")
             print(f"{nombre}: {link}")
 
-            navbarDatos.append(["Reglamento",nombre,link])
+            navbar.append(["Reglamento",nombre,link, "No aplica"])
 
         #Diplomado
         elif elemento == 2:#//*[@id="navbar-full-demo"]/ul[3]/li/ul
@@ -62,7 +62,7 @@ def datosNavbar():
                     link= navbarElemento.get_attribute("href")
                     print(f"{nombre}-{categoria}: {link}")
 
-                    navbarDatos.append([nombre, categoria, link])
+                    navbar.append([nombre, categoria, link, None])
 
         #Todos los demás
         else:#//*[@id="navbar-full-demo"]/ul[2]/li/ul
@@ -70,6 +70,8 @@ def datosNavbar():
             navbarElemento = driver.find_element(By.XPATH, f"{xpath}/ul[{elemento+1}]/li/a")
             nombre = navbarElemento.get_attribute("textContent").strip().replace("\n","")
             print("-"*30 + "\n" + f"{nombre}")
+
+            if nombre == "Examen general conocimientos": nombre = "Examen general de conocimientos"
 
             navbarElementoLista = driver.find_elements(By.XPATH, f"{xpath}/ul[{elemento+1}]/li/ul/*")
             print(len(navbarElementoLista))
@@ -80,7 +82,7 @@ def datosNavbar():
                 link= navbarElemento.get_attribute("href")
                 print(f"{nombre}-{categoria}: {link}")
 
-                navbarDatos.append([nombre, categoria, link])
+                navbar.append([nombre, categoria, link, None])
 
 def convocatoriasParaInscripcion():
 
@@ -122,18 +124,54 @@ def convocatoriasParaInscripcion():
             print(f"[-] No funciona un link de {titulacion}, tiene {len(itemsOcultos)}")
             continue
 
+        directorio.append([titulacion, categoria, link, periodo])
         
 
 try:
     url = "https://titulacion.fca.unam.mx/"
     driver.get(url)
 
-    #datosNavbar()
+    datosNavbar()
     convocatoriasParaInscripcion()
+
+    #Poner los periodos en todos las opciones de titulacion
+    mapa = {}
+    for i in directorio:
+        titulacion = i[0]
+        periodo = i[3]
+        mapa[titulacion] = periodo
+
+    for j in navbar:
+        nombre = j[0]
+        categoria = j[1]
+        link = j[2]
+        periodoNavbar = j[3]
+
+        periodoAsignado = mapa.get(nombre)
+
+        if periodoAsignado is None:
+            
+            # Caso especial: Diseño y Tesis
+            if nombre == "Diseño" or nombre == "Tesis":
+                periodoAsignado = mapa.get("Diseño y Tesis", "Abierta Permanentemente")
+            
+            elif periodoNavbar == "No aplica":
+                periodoAsignado = "No aplica"
+                
+            else:
+                periodoAsignado = "Abierta Permanentemente"
+        
+        directorio.append([nombre, categoria, link, periodoAsignado])
+
+    archivo_csv = "titulacion_fca.csv"
+    cabeceras = ["Titulación", "Categoría", "Link", "Periodo"]
+
+    with open(archivo_csv, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(cabeceras)
+        writer.writerows(directorio)
+        
+    print(f"¡Éxito! Datos guardados correctamente en '{archivo_csv}'")
 
 except Exception as e:
     print(f"Error durante el proceso: {e}")
-
-finally:
-    print("Cerrando el navegador...")
-    driver.quit()
