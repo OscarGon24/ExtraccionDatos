@@ -18,49 +18,108 @@ opciones.add_experimental_option("prefs", prefs)
 
 driver = webdriver.Chrome(options=opciones)
 
-def enQueConsiste(link, titulacionColumna):
+def Extractor(link, titulacion, id):
 
     driver.get(link)
     time.sleep(1)
 
+    print(titulacion)
+
     try:
-
-        #Obtiene titulo
-        titulacion = driver.find_element(By.XPATH, "/html/body/section[1]/div/div/div/h1").text
-        print(titulacion)
-
-        #Obtiene subtitulos
-        elementosH3 = driver.find_elements(By.XPATH, "//h3")
-
-        for h3 in elementosH3:
-
-            #Obtiene subtitulo del ciclo
-            titulo = h3.get_attribute("textContent").strip().replace("\n","")
-            
-            try:
-                H3p = h3.find_element(By.XPATH, "following-sibling::p[1]")
-                texto = H3p.get_attribute("textContent").strip().replace("\n","")
-
-                #H3ol = 
-
-                #Para la pagina de Examen general
-                if  len(texto) <= 100:#//*[@id="consiste"]/div[2]/div/ol
-                    H3ol = driver.find_elements(By.XPATH, "//*[@id='consiste']//ol/li")
-                    print(len(H3ol))
-
-                    for ol in H3ol:
-                        li = ol.get_attribute("textContent").strip().replace("\n","")
-                        texto = texto + li
-
-            except Exception:
-                texto = "No tiene párrafo asociado"
-                
-            print(f"Título: {titulo}")
-            print(f"Párrafo: {texto}")
-            print("-" * 30)
+        
+        texto = driver.find_element(By.ID, f"{id}").text.strip().replace("\n","")
+        return texto
 
     except Exception as e:
         print(f"Error durante el proceso: {e}")
+
+def ExtractorTextoInscripcion(id, nombre):
+
+    textoFinal = ""
+
+    tabTexto = driver.find_element(By.ID, f"{id}").get_attribute("textContent").strip()
+                            
+    tabTextoLimpio = " ".join(tabTexto.split())
+    textoFinal += f"[[[{nombre}]]] {tabTextoLimpio} "
+
+    print(textoFinal + "\n"*2)
+    
+    return textoFinal
+
+
+
+def inscripcion(link, titulacion):
+    
+    driver.get(link)
+    time.sleep(1)
+
+    print(titulacion)
+
+    try:
+        #Extraee los tab del content
+        todasTarjetas = driver.find_elements(By.XPATH, "//*[@id='tab3']/li")
+        #Se queda con los que estan en la pagina
+        tarjetasReales = [tarjeta for tarjeta in todasTarjetas if tarjeta.is_displayed()]
+        
+        print(f"Pestañas reales: {len(tarjetasReales)}")
+
+        if "especializacion" in link:
+
+            ExtractorTextoInscripcion("inscripcion", "Procedimiento de inscripción")
+        
+        else:
+            for tarjeta in tarjetasReales:
+                # Convertimos el nombre a MAYÚSCULAS para que las validaciones nunca fallen
+                nombre = tarjeta.get_attribute("textContent").strip().upper()
+                print(f"Procesando pestaña: {nombre}")
+
+                if "FCA-UNAM" in nombre:
+
+                    if "diplomado_linea" in link or "diplomado_ingles" in link:
+                        ExtractorTextoInscripcion("inscripcion_fca", nombre)
+                    else:
+                        ExtractorTextoInscripcion("webdesign", nombre)
+
+                elif "INSTITUCIONES INCORPORADAS" in nombre or "INCORPORADAS" in nombre:
+
+                    if "diplomado_presencial" in link:
+                        ExtractorTextoInscripcion("consulting",nombre)
+
+                    elif "diplomado_linea" in link or "diplomado_ingles" in link:
+                        ExtractorTextoInscripcion("inscripcion_inc",nombre)
+                    
+                    else:
+                        ExtractorTextoInscripcion("coding",nombre)
+
+                elif "OTRAS FACULTADES UNAM" in nombre or "FACULTADES Y FES-UNAM" in nombre:
+
+                    if "diplomado_linea" in link or "diplomado_ingles" in link:
+                        ExtractorTextoInscripcion("inscripcion_fes",nombre)
+
+                    else:
+                        ExtractorTextoInscripcion("coding",nombre)
+
+                elif "RECURSAMIENTO" in nombre:
+
+                    if "diplomado_linea" in link or "diplomado_ingles" in link:
+                        ExtractorTextoInscripcion("inscripcion_rec",nombre)
+
+                    else:
+                        ExtractorTextoInscripcion("inscripcion_rec",nombre)
+
+                elif "EX-ALUMNOS UNAM" in nombre:
+                    ExtractorTextoInscripcion("inscripcion_exa", nombre)
+
+                elif "EXTERNOS A LA UNAM" in nombre:
+                    ExtractorTextoInscripcion("inscripcion_ext", nombre)
+
+                else: 
+                    print("Otro")
+         
+
+    except Exception as e:
+        print(f"Error durante el proceso: {e}")
+        return "No aplica"
 
 try:
 
@@ -68,9 +127,23 @@ try:
     listaLinks = df["Link"].tolist()[6:]
     listaTitulacion = df["Titulación"].tolist()[6:]
 
-    for link, titulacion in zip(listaLinks,listaTitulacion):
+    textosExtraidos = ["No aplica","No aplica","No aplica","No aplica","No aplica","No aplica"]
+
+    for link,titulacion in zip(listaLinks,listaTitulacion):
         if "#consiste" in link:
-            enQueConsiste(link, titulacion)
+            id="consiste"
+            texto = Extractor(link,titulacion,id)
+            textosExtraidos.append(texto)
+        elif "#inscripcion" in link:
+            texto = inscripcion(link,titulacion)
+            textosExtraidos.append(texto)
+        else:
+            textosExtraidos.append("No aplica")
+
+    df["Informacion"] = textosExtraidos
+    df.to_csv("titulacion_fca.csv", index=False, encoding='utf-8')
+    print("\n¡Proceso terminado! Se actualizó el archivo 'titulacion_fca.csv' con la nueva columna.")
+
 
 except Exception as e:
     print(f"Error durante el proceso: {e}")
