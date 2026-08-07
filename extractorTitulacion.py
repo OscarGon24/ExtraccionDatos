@@ -371,8 +371,7 @@ def lineamientos(link, titulacion):
         print(f"Error extrayendo lineamientos: {e}")
         return "No aplica"
 
-try:
-
+def extraerDatosTitulacion():
     df = pd.read_csv("titulacion_fca.csv")
     listaLinks = df["Link"].tolist()[6:]
     listaTitulacion = df["Titulación"].tolist()[6:]
@@ -423,6 +422,9 @@ try:
     df.to_csv("titulacion_fca.csv", index=False, encoding='utf-8')
     print("\n¡Proceso terminado! Se actualizó el archivo 'titulacion_fca.csv' con la nueva columna.")
 
+try:
+
+    extraerDatosTitulacion()
 
 except Exception as e:
     print(f"Error durante el proceso: {e}")

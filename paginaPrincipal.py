@@ -3,6 +3,7 @@ import time
 import directorio
 import licenciaturas
 import titulacion
+import extractorTitulacion
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
@@ -35,6 +36,7 @@ try:
     print("Extrayendo datos de la titulación...")
     titulacion.datosNavbar()
     titulacion.convocatoriasParaInscripcion()
+    extractorTitulacion.extraerDatosTitulacion()
 
 except Exception as e:
     print(f"Error durante el proceso: {e}")
