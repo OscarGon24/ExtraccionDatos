@@ -32,26 +32,28 @@ try:
     general = driver.find_element(By.ID, "general")
     registro = driver.find_element(By.ID, "registro")
 
+    #GENERALIDADES
     for t in range(len(tabs)):
         if t == 0:
-            tema = general.find_element(By.XPATH, f"./div/h4")#//*[@id="general"]/div/h4
+            tema = general.find_element(By.XPATH, f"./div/h4")
             tema = tema.get_attribute("textContent").strip().replace("\n", " ").lower()
-            p = general.find_element(By.XPATH, f"./div/p")#//*[@id="general"]/div/p[1]
+            p = general.find_element(By.XPATH, f"./div/p")
             p = p.get_attribute("textContent").strip().replace("\n", " ").lower()
             contenido.append(["generalidades", tema, p])
 
         else:
-            tema = general.find_element(By.XPATH, f"./div/h5[{t}]")#//*[@id="general"]/div/h5[1]
+            tema = general.find_element(By.XPATH, f"./div/h5[{t}]")
             tema = tema.get_attribute("textContent").strip().replace("\n", " ").lower()
-            p = general.find_element(By.XPATH, f"./div/p[{t}+1]")#//*[@id="general"]/div/p[2]
+            p = general.find_element(By.XPATH, f"./div/p[{t}+1]")
             p = p.get_attribute("textContent").strip().replace("\n", " ").lower()
             contenido.append(["generalidades", tema, p])
 
-    tema = registro.find_element(By.XPATH, f"./div/h4")#//*[@id="registro"]/div/h4
+    #REGISTRO
+    tema = registro.find_element(By.XPATH, f"./div/h4")
     tema = tema.get_attribute("textContent").strip().replace("\n", " ").lower()
-    p = registro.find_element(By.XPATH, f"./div/p")#//*[@id="registro"]/div/p
+    p = registro.find_element(By.XPATH, f"./div/p")
     p = p.get_attribute("textContent").strip().replace("\n", " ").lower()
-    ul = registro.find_elements(By.XPATH, f"./div/div//a")#//*[@id="registro"]/div/div
+    ul = registro.find_elements(By.XPATH, f"./div/div//a")
 
     btn = Wait(driver, 10).until(
         EC.element_to_be_clickable((By.XPATH, "//*[@id='servicioSocialTabs']/li[2]/button"))
@@ -61,26 +63,151 @@ try:
     for a in ul:
         a.click()
 
-        x = Wait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, "//*[@id='contenidoModal']/div/div/div[1]/button"))
+        modal = Wait(driver, 10).until(
+            EC.visibility_of_element_located((By.ID, "modalContenido"))
         )
-        x.click()
+        time.sleep(1)
 
-        #//*[@id="modalContenido"]/section/div/div/header/h4
-        modal = driver.find_element(By.ID, "modalContenido")
+        try:
+            titulo_elemento = modal.find_element(By.XPATH, ".//header/h4 | .//div[1]/h4 | .//h4 | .//h5")
+            titulo = titulo_elemento.get_attribute("textContent").strip().replace("\n", " ")
+            print(f"Título extraído: {titulo}")
+        except:
+            titulo = "Título no identificado"
+            print("Advertencia: Este modal tiene un HTML distinto, no se halló el título.")
 
-        titulo = modal.find_element("./section/div/div/header")
-        titulo = titulo.get_attribute("h4")
+        body_element = modal.find_element(By.XPATH, ".//div[contains(@class, 'modal-body')] | .//div[1]/div")
+        
+        body_texto = body_element.get_attribute("textContent")
+        body_limpio = " ".join(body_texto.split())
+
+        enlaces_modal = body_element.find_elements(By.TAG_NAME, "a")
+        links_extraidos = []
+
+        for enlace in enlaces_modal:
+            texto_link = " ".join(enlace.get_attribute("textContent").split())
+            url = enlace.get_attribute("href")
+            
+            if url:
+                links_extraidos.append(f"{texto_link}: {url}")
+
+        if links_extraidos:
+            body_final = f"{body_limpio} | Enlaces de apoyo: " + " | ".join(links_extraidos)
+        else:
+            body_final = body_limpio
+
+        contenido.append([tema, titulo, body_final])
+
+        boton_cerrar = driver.find_element(By.XPATH, "//div[@id='contenidoModal']//button[contains(@class, 'btn-close')]")
+        boton_cerrar.click()
+
+        Wait(driver, 10).until(
+            EC.invisibility_of_element_located((By.ID, "modalContenido"))
+        )
+        time.sleep(0.5)
+
+    time.sleep(3)
+    btn = Wait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, "//*[@id='servicioSocialTabs']/li[3]/button"))
+    )
+    btn.click()
+    time.sleep(1)
+
+
+    #TERMINO
+    seccion = "Término"
+
+    termino = driver.find_element(By.XPATH, "//*[@id='termino']/div")
+    elementos = termino.find_elements(By.TAG_NAME, "a")
+    print(len(elementos))
+
+    for elemento in elementos:
+        titulo = elemento.get_attribute("textContent").strip().replace("\n", " ")
+        enlace = elemento.get_attribute("href").strip()
         print(titulo)
+        print(enlace)
 
-        #href = a.get_attribute("href").strip().replace("\n", " ").lower()
-        #texto = a.get_attribute("textContent").strip().replace("\n", " ").lower()
+        if "php" in enlace:
+            elemento.click()
+            time.sleep(1)
 
-        #serv = f"Para el servivio {texto} el link es: {href}"
+            modal = driver.find_element(By.XPATH, "//*[@id='modalContenido']/section/div/div/div[2]")
 
-        #contenido.append([tema, p, serv])
+            h5 = modal.find_element(By.TAG_NAME, "h5")
+            h5 = h5.get_attribute("textContent").replace("\n", "").strip()
+            body = modal.find_element(By.XPATH, ".//div/div[1]")
+            body = body.get_attribute("textContent").replace("\n", "").strip()
+            enlaces = modal.find_elements(By.TAG_NAME, "a")
 
+            links = []
 
+            for enlace in enlaces:
+                texto = enlace.get_attribute("textContent").lower().strip()
+                link = enlace.get_attribute("href")
+
+                textoLink = texto + ": " + link
+                links.append(textoLink)
+            print(links)
+            
+            body_limpio = " ".join(body.split())
+            body = f"{h5} {body_limpio} | Enlaces: " + " | ".join(links)
+            
+            contenido.append([seccion, titulo, body])
+
+            boton_cerrar = driver.find_element(By.XPATH, "//div[@id='contenidoModal']//button[contains(@class, 'btn-close')]")
+            boton_cerrar.click()
+
+            Wait(driver, 10).until(
+                EC.invisibility_of_element_located((By.ID, "modalContenido"))
+            )
+            time.sleep(0.5)
+        else:
+            contenido.append([seccion, titulo, enlace])
+
+    time.sleep(2)
+    btn = Wait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, "//*[@id='servicioSocialTabs']/li[3]/button"))
+    )
+    btn.click()
+    time.sleep(1)
+
+    #Liberación
+    seccion = "Liberación"
+    enlace = driver.find_element(By.XPATH, "//*[@id='liberacion']/div/a")
+    texto = enlace.get_attribute("textContent").strip()
+    enlace = enlace.get_attribute("href")
+
+    contenido.append([seccion, texto, enlace])
+
+    time.sleep(2)
+    btn = Wait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, "//*[@id='servicioSocialTabs']/li[4]/button"))
+    )
+    btn.click()
+    time.sleep(1)
+
+    #Baja //*[@id="baja"]/div/a
+    seccion = "Baja"
+    enlace = driver.find_element(By.XPATH, "//*[@id='baja']/div/a")
+    texto = enlace.get_attribute("textContent").strip()
+    enlace = enlace.get_attribute("href")
+
+    contenido.append([seccion, texto, enlace])
+
+    time.sleep(2)
+    btn = Wait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, "//*[@id='servicioSocialTabs']/li[5]/button"))
+    )
+    btn.click()
+    time.sleep(1)
+
+    #Reglamento
+    seccion = "Reglamento"
+    enlace = driver.find_element(By.XPATH, "//*[@id='reglamento']/div/a")
+    texto = enlace.get_attribute("textContent").strip()
+    enlace = enlace.get_attribute("href")
+
+    contenido.append([seccion, texto, enlace])
 
     archivo_csv = "servicioSocial_fca.csv"
     cabeceras = ["Sección", "Tema","Información"]
