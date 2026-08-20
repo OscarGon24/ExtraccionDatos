@@ -18,9 +18,6 @@ opciones.add_experimental_option("prefs", prefs)
 
 driver = webdriver.Chrome(options=opciones)
 
-#que significa este error 'builtin_function_or_method' object is not subscriptable
-
-
 try:
     url = "https://www.fca.unam.mx/estudiante/becas.php"
     driver.get(url)

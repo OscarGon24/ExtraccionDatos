@@ -15,6 +15,7 @@ opciones.set_capability('acceptInsecureCerts', True)
 
 prefs = {"https_only_mode_enabled": False}
 opciones.add_experimental_option("prefs", prefs)
+opciones.page_load_strategy = 'eager'
 
 driver = webdriver.Chrome(options=opciones)
 
@@ -32,23 +33,27 @@ try:
     general = driver.find_element(By.ID, "general")
     registro = driver.find_element(By.ID, "registro")
 
+    time.sleep(2)
+
     #GENERALIDADES
+    print("Generalidaes")
     for t in range(len(tabs)):
         if t == 0:
             tema = general.find_element(By.XPATH, f"./div/h4")
             tema = tema.get_attribute("textContent").strip().replace("\n", " ").lower()
             p = general.find_element(By.XPATH, f"./div/p")
             p = p.get_attribute("textContent").strip().replace("\n", " ").lower()
-            contenido.append(["generalidades", tema, p])
+            contenido.append(["Generalidades", tema, p])
 
         else:
             tema = general.find_element(By.XPATH, f"./div/h5[{t}]")
             tema = tema.get_attribute("textContent").strip().replace("\n", " ").lower()
             p = general.find_element(By.XPATH, f"./div/p[{t}+1]")
             p = p.get_attribute("textContent").strip().replace("\n", " ").lower()
-            contenido.append(["generalidades", tema, p])
+            contenido.append(["Generalidades", tema, p])
 
     #REGISTRO
+    print("Registro")
     tema = registro.find_element(By.XPATH, f"./div/h4")
     tema = tema.get_attribute("textContent").strip().replace("\n", " ").lower()
     p = registro.find_element(By.XPATH, f"./div/p")
@@ -66,7 +71,7 @@ try:
         modal = Wait(driver, 10).until(
             EC.visibility_of_element_located((By.ID, "modalContenido"))
         )
-        time.sleep(1)
+        time.sleep(2)
 
         try:
             titulo_elemento = modal.find_element(By.XPATH, ".//header/h4 | .//div[1]/h4 | .//h4 | .//h5")
@@ -115,6 +120,7 @@ try:
 
 
     #TERMINO
+    print("Término")
     seccion = "Término"
 
     termino = driver.find_element(By.XPATH, "//*[@id='termino']/div")
@@ -122,6 +128,7 @@ try:
     print(len(elementos))
 
     for elemento in elementos:
+        time.sleep(2)
         titulo = elemento.get_attribute("textContent").strip().replace("\n", " ")
         enlace = elemento.get_attribute("href").strip()
         print(titulo)
@@ -129,14 +136,20 @@ try:
 
         if "php" in enlace:
             elemento.click()
-            time.sleep(1)
+            time.sleep(2)
 
+            #//*[@id="modalContenido"]/section/div/div/div[2]
             modal = driver.find_element(By.XPATH, "//*[@id='modalContenido']/section/div/div/div[2]")
 
             h5 = modal.find_element(By.TAG_NAME, "h5")
             h5 = h5.get_attribute("textContent").replace("\n", "").strip()
-            body = modal.find_element(By.XPATH, ".//div/div[1]")
-            body = body.get_attribute("textContent").replace("\n", "").strip()
+
+            try:
+                body = modal.find_element(By.XPATH, ".//div/div[1]")
+                body = body.get_attribute("textContent").replace("\n", "").strip()
+            except Exception as e:
+                body = ""
+            
             enlaces = modal.find_elements(By.TAG_NAME, "a")
 
             links = []
@@ -172,6 +185,7 @@ try:
     time.sleep(1)
 
     #Liberación
+    print("Liberación")
     seccion = "Liberación"
     enlace = driver.find_element(By.XPATH, "//*[@id='liberacion']/div/a")
     texto = enlace.get_attribute("textContent").strip()
@@ -186,7 +200,8 @@ try:
     btn.click()
     time.sleep(1)
 
-    #Baja //*[@id="baja"]/div/a
+    #Baja
+    print("Baja")
     seccion = "Baja"
     enlace = driver.find_element(By.XPATH, "//*[@id='baja']/div/a")
     texto = enlace.get_attribute("textContent").strip()
@@ -202,6 +217,7 @@ try:
     time.sleep(1)
 
     #Reglamento
+    print("Reglamento")
     seccion = "Reglamento"
     enlace = driver.find_element(By.XPATH, "//*[@id='reglamento']/div/a")
     texto = enlace.get_attribute("textContent").strip()
